@@ -25,9 +25,17 @@ class MonitorCheckUseCase:
 
         # Извлекаем значение
         value = self.extractor.extract(html, monitor.selector)
-        
 
+        # Получаем предыдущий snapshot
+        last_snapshot = self.snapshot_repository.get_last(monitor.id)
 
+        changed = False
+        if last_snapshot is not None:
+            old_value = self._cast(last_snapshot.value)
+            new_value = self._cast(value)
+            
+            changed = old_value != new_value
+            
         # Создаём Snapshot
         snapshot = Snapshot(
             monitor_id=monitor.id, value=value, created_at=datetime.now(timezone.utc)
@@ -35,7 +43,15 @@ class MonitorCheckUseCase:
 
         self.snapshot_repository.save(snapshot)
 
+        if changed:
+            print("VALUE CHANGED")
+
         return snapshot
+    
+    def _cast(self, value):
+        if self.extractor.value_type == "numeric":
+            return float(value)
+        return str(value)
 
     def __repr__(self):
         return f"MonitorCheckUseCase(fetcher='{self.fetcher}', snapshot_repository='{self.snapshot_repository}', extractor='{self.extractor}')"
