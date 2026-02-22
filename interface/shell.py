@@ -1,7 +1,6 @@
 import cmd
 import uuid
 import shlex
-from application.task_manager import TaskManager
 from domain.tasks.monitor_task import MonitorTask
 from domain.entitles.monitor import Monitor
 from domain.services.monitor_identity import generate_monitor_id
@@ -16,9 +15,9 @@ class MonitorShell(cmd.Cmd):
     intro = "Monitor daemon started. Type help or ?."
     prompt = "(monitor) "
 
-    def __init__(self):
+    def __init__(self, task_manager):
         super().__init__()
-        self.manager = TaskManager()
+        self.manager = task_manager
 
     def do_add(self, arg):
         """
