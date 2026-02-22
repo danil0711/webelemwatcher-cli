@@ -1,6 +1,8 @@
+from datetime import datetime
 import sqlite3
 
 from application.interfaces.snapshot_repository import SnapshotRepository
+from domain.entitles import monitor
 from domain.entitles.snapshot import Snapshot
 
 
@@ -30,3 +32,27 @@ class SqliteSnapshotRepository(SnapshotRepository):
             (snapshot.monitor_id, str(snapshot.value), snapshot.created_at.isoformat()),
         )
         self.conn.commit()
+        
+    def get_last(self, monitor_id: str) -> Snapshot | None:
+        cursor = self.conn.execute(
+            """
+            SELECT monitor_id, value, created_at
+            FROM snapshots
+            WHERE monitor_id = ?
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (monitor_id, )
+        )
+        
+        row = cursor.fetchone()
+        
+        if row is None:
+            return None
+        
+        return Snapshot(
+            monitor_id=row[0],
+            value=row[1],
+            created_at=datetime.fromisoformat(row[2])
+        )
+        
