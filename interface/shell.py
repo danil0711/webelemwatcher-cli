@@ -1,4 +1,7 @@
 import cmd
+from datetime import timedelta, datetime
+import os
+import time
 import uuid
 import shlex
 from domain.tasks.monitor_task import MonitorTask
@@ -61,17 +64,14 @@ class MonitorShell(cmd.Cmd):
 
     def do_ps(self, arg):
         """
-        Show all tasks
+        Show all tasks.
+        Optional: ps --real-time
         """
-
-        if not self.manager.list():
-            print("No tasks are running currently.")
-        for task in self.manager.list():
-            print(
-                f"{task.task_id} | {task.monitor.url} | "
-                f"{task.status()} | interval={task.interval_sec}"
-            )
-
+        real_time = "--real-time" in arg.split()
+        if real_time:
+            self._watch_tasks()
+        else:
+            self._print_tasks()
     def do_stop(self, arg):
         """
         stop <task_id>
@@ -109,3 +109,34 @@ class MonitorShell(cmd.Cmd):
         for task in self.manager.list():
             task.stop()
         return True
+
+
+
+    def _print_tasks(self):
+        """Печатает текущие задачи один раз."""
+        tasks = self.manager.list()
+        if not tasks:
+            print("No tasks are running currently.")
+            return
+
+        print(f"{'TaskID':8} | {'URL':30} | {'Status':8} | {'Next Trigger'}")
+        print("-" * 70)
+        for task in tasks:
+            remaining = max(
+                0,
+                (task._last_run + timedelta(seconds=task.interval_sec) - datetime.now()).total_seconds()
+            )
+            print(
+                f"{task.task_id:8} | {task.monitor.url[:30]:30} | "
+                f"{task.status():8} | {int(remaining)}s"
+            )
+
+    def _watch_tasks(self):
+        """Постоянно показывает задачи с обновлением экрана каждую секунду."""
+        try:
+            while True:
+                os.system("clear")  # на Windows можно "cls"
+                self._print_tasks()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nStopped real-time ps.")

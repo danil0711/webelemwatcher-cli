@@ -2,7 +2,7 @@ import threading
 import time
 from application.interfaces.task import Task
 from application.use_cases.monitor_check import MonitorCheckUseCase
-
+from datetime import datetime, timedelta
 
 class MonitorTask(Task):
     """
@@ -27,6 +27,7 @@ class MonitorTask(Task):
         )
         self.use_case = use_case
         self._thread = None
+        self._last_run: datetime = datetime.now() - timedelta(seconds=self.interval_sec)
 
     def run(self):
         """
@@ -39,6 +40,7 @@ class MonitorTask(Task):
         started_at = time.time()
 
         while not self._stop:
+            self._last_run = datetime.now() 
             if self.duration_sec and (time.time() - started_at > self.duration_sec):
                 print(f"[{self.task_id}] duration exceeded. stopping.")
                 break
