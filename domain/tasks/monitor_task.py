@@ -42,18 +42,21 @@ class MonitorTask(Task):
             if self.duration_sec and (time.time() - started_at > self.duration_sec):
                 print(f"[{self.task_id}] duration exceeded. stopping.")
                 break
-
-            snapshot = self.use_case.execute(self.monitor)
-            if self.alert_threshold is not None:
-                try:
-                    value = float(snapshot.value)
-                    if value >= self.alert_threshold:
-                        print(
-                            f"[ALERT] {self.task_id}: "
-                            f"value {value} >= {self.alert_threshold}"
-                        )
-                except ValueError:
-                    pass
+            try:
+                
+                snapshot = self.use_case.execute(self.monitor)
+                if self.alert_threshold is not None:
+                    try:
+                        value = float(snapshot.value)
+                        if value >= self.alert_threshold:
+                            print(
+                                f"[ALERT] {self.task_id}: "
+                                f"value {value} >= {self.alert_threshold}"
+                            )
+                    except ValueError:
+                        pass
+            except Exception as e:
+                print(f"[{self.task_id}] Error fetching {self.monitor.url}: {e}")
 
             time.sleep(self.interval_sec)
 
