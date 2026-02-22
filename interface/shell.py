@@ -81,6 +81,25 @@ class MonitorShell(cmd.Cmd):
             print("Stopped.")
         except Exception as e:
             print("Error:", e)
+            
+    def do_kill_all(self, arg):
+        """
+        Kill all running tasks immediately
+        Usage: kill_all
+        """
+        tasks = self.manager.list()
+        if not tasks:
+            print("No tasks to kill.")
+            return
+        
+        for task in tasks:
+            try:
+                task.stop()
+                print(f"Task {task.task_id} stopped.")
+            except Exception as e:
+                print(f"Error stopping task {task.task_id}: {e}")
+        
+        print("All tasks have been killed.")
 
     def do_exit(self, arg):
         """
