@@ -4,6 +4,7 @@ from application.interfaces.task import Task
 from application.use_cases.monitor_check import MonitorCheckUseCase
 from datetime import datetime, timedelta
 
+
 class MonitorTask(Task):
     """
     Задача периодического мониторинга.
@@ -33,19 +34,22 @@ class MonitorTask(Task):
         """
         Запуск задачи в отдельном потоке.
         """
+        if self._thread and self._thread.is_alive():
+            return  # Защита от повторного запуска
+
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
 
     def _loop(self):
         started_at = time.time()
 
-        while not self._stop:
-            self._last_run = datetime.now() 
+        while not self._stop_event.is_set():
+            self._last_run = datetime.now()
             if self.duration_sec and (time.time() - started_at > self.duration_sec):
                 print(f"[{self.task_id}] duration exceeded. stopping.")
                 break
             try:
-                
+
                 snapshot = self.use_case.execute(self.monitor)
                 if self.alert_threshold is not None:
                     try:
@@ -60,9 +64,20 @@ class MonitorTask(Task):
             except Exception as e:
                 print(f"[{self.task_id}] Error fetching {self.monitor.url}: {e}")
 
-            time.sleep(self.interval_sec)
-
-        self._stop = True
+            if self._stop_event.wait(self.interval_sec):
+                break
 
     def status(self) -> str:
-        return "stopped" if self._stop else "running"
+        if self._thread and self._thread.is_alive():
+            return "running"
+        return "stopped"
+
+    def stop(self):
+        super().stop()
+
+        if (
+            self._thread
+            and self._thread.is_alive()
+            and threading.current_thread() is not self._thread
+        ):
+            self._thread.join(timeout=2)
