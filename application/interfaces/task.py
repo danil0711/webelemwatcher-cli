@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+import threading
 from domain.entitles.monitor import Monitor
 
 
@@ -23,18 +24,16 @@ class Task(ABC):
         self.duration_sec = duration_sec
         self.alert_threshold = alert_threshold
         self.created_at = datetime.now()
-        self._stop = False
+        self._stop_event = threading.Event()
 
     @abstractmethod
     def run(self):
         "Метод, выполняющий задачу"
         pass
     
-    
-    
-    
     def stop(self):
-        self._stop = True
+        """Request task to stop"""
+        self._stop_event.set()
 
     def __repr__(self):
         return (
