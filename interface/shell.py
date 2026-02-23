@@ -15,8 +15,8 @@ from application.use_cases.monitor_check import MonitorCheckUseCase
 
 
 class MonitorShell(cmd.Cmd):
-    intro = "Monitor daemon started. Type help or ?."
-    prompt = "(monitor) "
+    intro = "Parser started. Type help or ?."
+    prompt = "(wewatcher) "
 
     def __init__(self, task_manager):
         super().__init__()
@@ -65,13 +65,19 @@ class MonitorShell(cmd.Cmd):
     def do_ps(self, arg):
         """
         Show all tasks.
-        Optional: ps --real-time
+
+        Usage:
+            ps
+            ps --real-time
+        Options:
+            --real-time Shows time until until task is triggered
         """
         real_time = "--real-time" in arg.split()
         if real_time:
             self._watch_tasks()
         else:
             self._print_tasks()
+
     def do_stop(self, arg):
         """
         stop <task_id>
@@ -81,25 +87,26 @@ class MonitorShell(cmd.Cmd):
             print("Stopped.")
         except Exception as e:
             print("Error:", e)
-            
+
     def do_kill_all(self, arg):
         """
         Kill all running tasks immediately
         Usage: kill_all
         """
-        tasks = self.manager.list()
-        if not tasks:
-            print("No tasks to kill.")
-            return
-        
-        for task in tasks:
-            try:
-                task.stop()
-                print(f"Task {task.task_id} stopped.")
-            except Exception as e:
-                print(f"Error stopping task {task.task_id}: {e}")
-        
-        print("All tasks have been killed.")
+        try:
+            self.manager.kill_all()
+        except Exception as e:
+            print("Error", e)
+
+    def do_rm_all_tasks(self, arg):
+        """
+        Remove all tasks
+        Usage: rm_all_tasks
+        """
+        try:
+            self.manager.remove_all()
+        except Exception as e:
+            print("Error", e)
 
     def do_exit(self, arg):
         """
@@ -109,8 +116,6 @@ class MonitorShell(cmd.Cmd):
         for task in self.manager.list():
             task.stop()
         return True
-
-
 
     def _print_tasks(self):
         """Печатает текущие задачи один раз."""
@@ -124,7 +129,11 @@ class MonitorShell(cmd.Cmd):
         for task in tasks:
             remaining = max(
                 0,
-                (task._last_run + timedelta(seconds=task.interval_sec) - datetime.now()).total_seconds()
+                (
+                    task._last_run
+                    + timedelta(seconds=task.interval_sec)
+                    - datetime.now()
+                ).total_seconds(),
             )
             print(
                 f"{task.task_id:8} | {task.monitor.url[:30]:30} | "
