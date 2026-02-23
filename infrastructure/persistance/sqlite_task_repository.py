@@ -48,7 +48,7 @@ class SqliteTaskRepository:
                 task.duration_sec,
                 task.alert_threshold,
                 value_type,
-                "running" if not task._stop else "stopped",
+                "running" if task.status() == "running" else "stopped"
             ),
         )
         self.conn.commit()
