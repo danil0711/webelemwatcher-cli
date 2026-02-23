@@ -2,6 +2,7 @@ import sqlite3
 from typing import List
 from domain.tasks.monitor_task import MonitorTask
 
+
 class SqliteTaskRepository:
     """
     Хранит все задачи MonitorTask в SQLite.
@@ -47,7 +48,7 @@ class SqliteTaskRepository:
                 task.duration_sec,
                 task.alert_threshold,
                 value_type,
-                "running" if not task._stop else "stopped"
+                "running" if not task._stop else "stopped",
             ),
         )
         self.conn.commit()
@@ -78,3 +79,11 @@ class SqliteTaskRepository:
                 }
             )
         return tasks
+
+    def truncate_tasks(self):
+        self.conn.execute(
+            """
+            DELETE FROM tasks;
+            """
+        )
+        self.conn.commit()
