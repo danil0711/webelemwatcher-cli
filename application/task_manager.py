@@ -1,3 +1,4 @@
+from re import L
 from typing import Dict
 from application.interfaces.task import Task
 from domain.entitles.monitor import Monitor
@@ -58,3 +59,21 @@ class TaskManager:
             self._tasks[task.task_id] = task
             if row["status"] == "running":
                 task.run()
+                
+    def kill_all(self):
+        """Остановка всех задач"""
+        for task in self._tasks.values():
+            task.stop()
+            self.repo.update_status(task.task_id, "stopped")
+        print('All tasks are stopped')
+        
+    def remove_all(self):
+        """Удаление всех задач"""
+        for task in self._tasks.values():
+            task.stop()
+            
+            
+        self._tasks.clear()
+        self.repo.truncate_tasks()
+        
+        print("All tasks are removed")
