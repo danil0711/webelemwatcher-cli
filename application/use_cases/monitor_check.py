@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 from application.use_cases.extractor import Extractor
 from domain.entitles.snapshot import Snapshot
+from infrastructure.events.event_bus import EventBus
+
+bus = EventBus()
 
 
 class MonitorCheckUseCase:
@@ -44,7 +47,7 @@ class MonitorCheckUseCase:
         self.snapshot_repository.save(snapshot)
 
         if changed:
-            print("VALUE CHANGED")
+            bus.emit("VALUE CHANGED")
 
         return snapshot
     

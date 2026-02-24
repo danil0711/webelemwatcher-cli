@@ -3,6 +3,9 @@ import time
 from application.interfaces.task import Task
 from application.use_cases.monitor_check import MonitorCheckUseCase
 from datetime import datetime, timedelta
+from infrastructure.events.event_bus import EventBus
+
+bus = EventBus()
 
 
 class MonitorTask(Task):
@@ -46,7 +49,7 @@ class MonitorTask(Task):
         while not self._stop_event.is_set():
             self._last_run = datetime.now()
             if self.duration_sec and (time.time() - started_at > self.duration_sec):
-                print(f"[{self.task_id}] duration exceeded. stopping.")
+                bus.emit(f"[{self.task_id}] duration exceeded. stopping.")
                 break
             try:
 
@@ -55,14 +58,14 @@ class MonitorTask(Task):
                     try:
                         value = float(snapshot.value)
                         if value >= self.alert_threshold:
-                            print(
+                            bus.emit(
                                 f"[ALERT] {self.task_id}: "
                                 f"value {value} >= {self.alert_threshold}"
                             )
                     except ValueError:
                         pass
             except Exception as e:
-                print(f"[{self.task_id}] Error fetching {self.monitor.url}: {e}")
+                bus.emit(f"[{self.task_id}] Error fetching {self.monitor.url}: {e}")
 
             if self._stop_event.wait(self.interval_sec):
                 break
