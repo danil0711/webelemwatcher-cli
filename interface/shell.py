@@ -7,6 +7,7 @@ import shlex
 from domain.tasks.monitor_task import MonitorTask
 from domain.entitles.monitor import Monitor
 from domain.services.monitor_identity import generate_monitor_id
+from infrastructure.events.event_bus import EventBus
 from infrastructure.fetchers.http_fetcher import HttpFetcher
 from infrastructure.persistance.sqlite_snapshot_repository import (
     SqliteSnapshotRepository,
@@ -116,9 +117,17 @@ class MonitorShell(cmd.Cmd):
         for task in self.manager.list():
             task.stop()
         return True
+    
+    def onecmd(self, line):
+        # сначала выводим события из EventBus
+        for msg in EventBus().flush():
+            print(msg)
+        # затем выполняем команду
+        return super().onecmd(line)
 
     def _print_tasks(self):
         """Печатает текущие задачи один раз."""
+        print('_print_tasks is called')
         tasks = self.manager.list()
         if not tasks:
             print("No tasks are running currently.")
@@ -149,3 +158,6 @@ class MonitorShell(cmd.Cmd):
                 time.sleep(1)
         except KeyboardInterrupt:
             print("\nStopped real-time ps.")
+
+
+    
