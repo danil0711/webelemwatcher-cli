@@ -1,3 +1,4 @@
+
 from bs4 import BeautifulSoup
 
 
@@ -15,8 +16,10 @@ class Extractor:
         element = soup.select_one(selector)
         if not element:
             raise ValueError(f"Selector {selector} не нашёл элемент.")
+        
 
         text = element.get_text(strip=True)
+
 
         if self.value_type == "numeric":
             numeric_value = self._extract_numeric(text)
@@ -27,13 +30,13 @@ class Extractor:
         else:
             return text
 
-    def _extract_numeric(self, text: str) -> str:
-        """Оставляет только цифры и точку."""
-        result = []
-        for ch in text:
-            if ch.isdigit() or ch == ".":
-                result.append(ch)
-        return "".join(result)
+    def _extract_numeric(self, text: str) -> float:
+        cleaned = (
+            text.replace(",", "")
+                .replace("\xa0", "")
+                .strip()
+        )
+        return float(cleaned)
 
     def __repr__(self):
         return f"Extractor(value_type='{self.value_type}')"
