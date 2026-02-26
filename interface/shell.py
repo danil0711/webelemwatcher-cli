@@ -19,9 +19,10 @@ class MonitorShell(cmd.Cmd):
     intro = "Parser started. Type help or ?."
     prompt = "(wewatcher) "
 
-    def __init__(self, task_manager):
+    def __init__(self, task_manager, loader):
         super().__init__()
         self.manager = task_manager
+        self.loader = loader
 
     def do_add(self, arg):
         """
@@ -118,6 +119,16 @@ class MonitorShell(cmd.Cmd):
             task.stop()
         return True
     
+    def do_load(self, arg):
+        path = arg.strip().strip('"').strip("'") 
+        if not path:
+            print("Usage: load <path_to_yaml>")
+            return
+        tasks = self.loader.load_tasks(path)
+        for task in tasks:
+            self.manager.add(task)
+        print(f"Loaded {len(tasks)} tasks")
+        
     def onecmd(self, line):
         # сначала выводим события из EventBus
         for msg in EventBus().flush():
