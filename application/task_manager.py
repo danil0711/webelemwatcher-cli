@@ -3,17 +3,17 @@ from typing import Dict
 from application.interfaces.task import Task
 from domain.entitles.monitor import Monitor
 from infrastructure.persistance.sqlite_task_repository import SqliteTaskRepository
-from application.use_cases.monitor_check import MonitorCheckUseCase
 from domain.tasks.monitor_task import MonitorTask
 from infrastructure.fetchers.http_fetcher import HttpFetcher
 from infrastructure.persistance.sqlite_snapshot_repository import SqliteSnapshotRepository
 
 class TaskManager:
-    def __init__(self, db_path="tasks.db"):
+    def __init__(self, db_path, use_case):
         self._tasks: Dict[str, Task] = {}
         self.repo = SqliteTaskRepository(db_path)
         self.fetcher = HttpFetcher()
         self.snapshot_repo = SqliteSnapshotRepository("snapshot.db")
+        self.use_case = use_case
 
     def add(self, task: MonitorTask, value_type="numeric"):
         if task.task_id in self._tasks:
@@ -47,13 +47,12 @@ class TaskManager:
         rows = self.repo.load_all()
         for row in rows:
             monitor = Monitor(row["monitor_id"], row["url"], row["selector"])
-            use_case = MonitorCheckUseCase(self.fetcher, self.snapshot_repo, value_type=row["value_type"])
             task = MonitorTask(
                 task_id=row["task_id"],
                 monitor=monitor,
                 interval_sec=row["interval_sec"],
                 duration_sec=row["duration_sec"],
-                use_case=use_case,
+                use_case=self.use_case,
                 alert_threshold=row["alert_threshold"]
             )
             self._tasks[task.task_id] = task
