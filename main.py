@@ -10,7 +10,7 @@ from application.use_cases.monitor_check import MonitorCheckUseCase
 def main():
     # --- infrastructure ---
     fetcher = HttpFetcher()
-    snapshot_repo = SqliteSnapshotRepository("snapshots.db")
+    snapshot_repo = SqliteSnapshotRepository("snapshot.db")
 
     # --- use case ---
     monitor_check_use_case = MonitorCheckUseCase(
