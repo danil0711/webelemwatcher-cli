@@ -52,8 +52,21 @@ class MonitorCheckUseCase:
         return snapshot
     
     def _cast(self, value):
+        """
+        Преобразует значение в нужный тип:
+        - numeric: удаляем все кроме цифр и точки, конвертируем в float
+        - text: просто str
+        """
         if self.extractor.value_type == "numeric":
-            return float(value)
+            import re
+            # сначала str()
+            value_str = str(value)
+            cleaned = re.sub(r"[^\d.]", "", value_str)
+            try:
+                return float(cleaned)
+            except ValueError:
+                bus.emit(f"[{self.fetcher}] Не удалось конвертировать число: '{value}'")
+                return 0.0
         return str(value)
 
     def __repr__(self):
