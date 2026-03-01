@@ -48,3 +48,14 @@ class YamlTaskLoader:
             )
             tasks.append(task)
         return tasks
+    
+    
+# Tasks YAML example 
+# tasks:
+#   - id: "task1"
+#     monitor:
+#       url: "https://www.worldometers.info"
+#       selector: "div.rts-counter"
+#     interval_sec: 10
+#     duration_sec: 300
+#     alert_threshold: 10000000
